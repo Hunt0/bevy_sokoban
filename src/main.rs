@@ -1,15 +1,16 @@
 mod player;
 mod map;
+mod state;
 
 use bevy::prelude::*;
 
 fn main() {
     App::build()
+        .add_state(state::AppState::LOADING)
         .insert_resource(ClearColor(Color::rgb(0.2, 0.3, 0.5)))
         .add_plugins(DefaultPlugins)
         .add_plugin(player::PlayerPlugin)
         .add_plugin(map::MapPlugin)
-        // .add_plugin(HelloPlugin)
         .run();
 }
 

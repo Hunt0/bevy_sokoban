@@ -33,9 +33,7 @@ fn player_movement_system(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&Player, &mut Transform)>,
-    current_map: Res<Map>,
 ) {
-    // println!("current map {}", *current_map);
     if let Ok((player, mut transform)) = query.single_mut() {
         let mut x_direction = 0.0;
         let mut y_direction = 0.0;
@@ -61,14 +59,9 @@ fn player_movement_system(
         }
 
         let translation = &mut transform.translation;
-        // move the paddle horizontally
         translation.x += time.delta_seconds() * x_direction * player.speed;
-        // bound the paddle within the walls
         translation.x = translation.x.min(380.0).max(-380.0);
-
         translation.y += time.delta_seconds() * y_direction * player.speed;
-
-        // bound the paddle within the walls
         translation.y = translation.y.min(380.0).max(-380.0);
     }
 }
