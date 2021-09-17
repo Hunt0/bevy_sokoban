@@ -1,6 +1,8 @@
 mod player;
 mod map;
 mod state;
+mod static_entities;
+mod constants;
 
 use bevy::prelude::*;
 
@@ -11,6 +13,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(player::PlayerPlugin)
         .add_plugin(map::MapPlugin)
+        .add_plugin(static_entities::StaticEntitiesPlugin)
         .run();
 }
 

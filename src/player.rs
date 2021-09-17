@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::map::Map;
+use crate::constants;
 
 pub struct PlayerPlugin;
 
@@ -42,13 +43,13 @@ fn create_player(
     commands.spawn_bundle(SpriteBundle {
         material: materials.add(texture_handle.into()),
         transform: Transform::from_translation(Vec3::new(
-            position[0].x,
-            position[0].y,
+            position[0].x * constants::OFFSET,
+            position[0].y * constants::OFFSET,
             0.0
         )),
         ..Default::default()
     }).insert(Player { 
-        speed: 500.0,
+        speed: 32.0,
     });
 }
 
@@ -61,30 +62,33 @@ fn player_movement_system(
         let mut x_direction = 0.0;
         let mut y_direction = 0.0;
 
-        if keyboard_input.pressed(KeyCode::Left) ||
-            keyboard_input.pressed(KeyCode::A) {
+        // Movement changed to just_pressed instead of pressed along with 
+        // removing the time.delta_seconds() to only move 32 pixels at a time
+        
+        if keyboard_input.just_pressed(KeyCode::Left) ||
+            keyboard_input.just_pressed(KeyCode::A) {
             x_direction -= 1.0;
         }
 
-        if keyboard_input.pressed(KeyCode::Right) ||
-            keyboard_input.pressed(KeyCode::D) {
+        if keyboard_input.just_pressed(KeyCode::Right) ||
+            keyboard_input.just_pressed(KeyCode::D) {
             x_direction += 1.0;
         }
 
-        if keyboard_input.pressed(KeyCode::Up) ||
-            keyboard_input.pressed(KeyCode::W) {
+        if keyboard_input.just_pressed(KeyCode::Up) ||
+            keyboard_input.just_pressed(KeyCode::W) {
             y_direction += 1.0;
         }
 
-        if keyboard_input.pressed(KeyCode::Down) ||
-            keyboard_input.pressed(KeyCode::S) {
+        if keyboard_input.just_pressed(KeyCode::Down) ||
+            keyboard_input.just_pressed(KeyCode::S) {
             y_direction -= 1.0;
         }
 
         let translation = &mut transform.translation;
-        translation.x += time.delta_seconds() * x_direction * player.speed;
-        translation.x = translation.x.min(380.0).max(-380.0);
-        translation.y += time.delta_seconds() * y_direction * player.speed;
-        translation.y = translation.y.min(380.0).max(-380.0);
+        // translation.x += time.delta_seconds() * x_direction * player.speed;
+        // translation.y += time.delta_seconds() * y_direction * player.speed;
+        translation.x += x_direction * player.speed;
+        translation.y += y_direction * player.speed;
     }
 }
