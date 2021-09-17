@@ -5,7 +5,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup_player.system())
+        app.add_startup_system(create_player.system().after("load_map"))
             .add_system(player_movement_system.system());
     }
 }
@@ -14,15 +14,38 @@ struct Player {
     speed: f32,
 }
 
-fn setup_player(
+// pub fn position_to_translation(
+//     map: &Res<Map>,
+//     tile_size: &Res<TileSize>,
+//     position: &Position,
+//     z: f32,
+// ) -> Transform {
+//     Transform::from_translation(Vec3::new(
+//         (position.x as f32 - (map.width - 1) as f32 / 2.0) * tile_size.0,
+//         (-(position.y as f32) + (map.height - 1) as f32 / 2.0) * tile_size.0,
+//         z,
+//     ))
+// }
+
+fn create_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    map: Res<Map>,
 ) {
     let texture_handle = asset_server.load("images/player.png");
+    let position = map.entity_positions.get(&'P').unwrap();
+
+    println!("PLAYER POSITION: {}", position[0]);
+
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(SpriteBundle {
         material: materials.add(texture_handle.into()),
+        transform: Transform::from_translation(Vec3::new(
+            position[0].x,
+            position[0].y,
+            0.0
+        )),
         ..Default::default()
     }).insert(Player { 
         speed: 500.0,
