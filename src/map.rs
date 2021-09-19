@@ -4,6 +4,7 @@ use std::fs::*;
 use std::path::Path;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::hash::{Hash, Hasher};
 use bevy::prelude::*;
 use crate::state::AppState;
 
@@ -13,15 +14,12 @@ impl Plugin for MapPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.insert_resource(Map {
                 entity_positions: HashMap::new(),
+                position_lookup: HashMap::new(),
                 height: 0.0,
                 width: 0.0,
                 current_map_index: 0,
             })
             .add_startup_system(load_map.system().label("load_map"));
-            // .add_system_set(
-            //     SystemSet::on_enter(AppState::LOADING)
-            //         .with_system(load_map.system().label("load_map")
-            // );
     }
 }
 
@@ -38,6 +36,9 @@ impl fmt::Display for Position {
 
 pub struct Map {
     pub entity_positions: HashMap<char, Vec<Position>>,
+    // Using integers here is a probably going to be a big problem
+    // only doing so because rust is full of tedious garbage
+    pub position_lookup: HashMap<(i8, i8), char>,
     pub height: f32,
     pub width: f32,
     pub current_map_index: u8,
@@ -58,6 +59,7 @@ impl fmt::Display for Map {
 fn load_map(
     mut map: ResMut<Map>
 ) {
+    println!("LOADING MAP");
     let file_string_path = format!("assets/maps/map_{}.txt", map.current_map_index);
     let file_path = Path::new(
         &file_string_path
@@ -69,7 +71,6 @@ fn load_map(
     };
 
     let file_lines = BufReader::new(file).lines();
-    //TODO : probably set height & width in a better way
 
     for (y, file_line) in file_lines.enumerate() {
         let y_float = y as f32;
@@ -96,6 +97,8 @@ fn load_map(
                     position_vec.push(position);
                     map.entity_positions.insert(character, position_vec);
                 }
+
+                map.position_lookup.insert((x as i8, y as i8), character);
             }
         } else {
             panic!("Failed to read line in file");

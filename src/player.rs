@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use crate::map::Map;
+use crate::map::Position;
 use crate::constants;
+use crate::static_entities::Wall;
+use bevy::sprite::collide_aabb::collide;
 
 pub struct PlayerPlugin;
 
@@ -13,20 +16,8 @@ impl Plugin for PlayerPlugin {
 
 struct Player {
     speed: f32,
+    position: Position,
 }
-
-// pub fn position_to_translation(
-//     map: &Res<Map>,
-//     tile_size: &Res<TileSize>,
-//     position: &Position,
-//     z: f32,
-// ) -> Transform {
-//     Transform::from_translation(Vec3::new(
-//         (position.x as f32 - (map.width - 1) as f32 / 2.0) * tile_size.0,
-//         (-(position.y as f32) + (map.height - 1) as f32 / 2.0) * tile_size.0,
-//         z,
-//     ))
-// }
 
 fn create_player(
     mut commands: Commands,
@@ -36,8 +27,6 @@ fn create_player(
 ) {
     let texture_handle = asset_server.load("images/player.png");
     let position = map.entity_positions.get(&'P').unwrap();
-
-    println!("PLAYER POSITION: {}", position[0]);
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(SpriteBundle {
@@ -50,21 +39,27 @@ fn create_player(
         ..Default::default()
     }).insert(Player { 
         speed: 32.0,
+        position: Position {
+            x: position[0].x,
+            y: position[0].y,
+        }
     });
+
+    println!("PLAYER POSITION: X {}, Y {}", position[0].x, position[0].y);
 }
 
 fn player_movement_system(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&Player, &mut Transform)>,
+    mut player_query: Query<(&mut Player, &mut Transform, &Sprite)>,
+    map: Res<Map>
 ) {
-    if let Ok((player, mut transform)) = query.single_mut() {
+    if let Ok((mut player, mut transform, sprite)) = player_query.single_mut() {
         let mut x_direction = 0.0;
         let mut y_direction = 0.0;
 
         // Movement changed to just_pressed instead of pressed along with 
         // removing the time.delta_seconds() to only move 32 pixels at a time
-        
         if keyboard_input.just_pressed(KeyCode::Left) ||
             keyboard_input.just_pressed(KeyCode::A) {
             x_direction -= 1.0;
@@ -86,9 +81,17 @@ fn player_movement_system(
         }
 
         let translation = &mut transform.translation;
-        // translation.x += time.delta_seconds() * x_direction * player.speed;
-        // translation.y += time.delta_seconds() * y_direction * player.speed;
-        translation.x += x_direction * player.speed;
-        translation.y += y_direction * player.speed;
+
+        let new_x_position = player.position.x + x_direction;
+        let new_y_position = player.position.y + y_direction;
+        let new_pos = (new_x_position as i8, new_y_position as i8);
+
+        if map.position_lookup.get(&new_pos).unwrap() != &'W' {
+            translation.x += x_direction * player.speed;
+            translation.y += y_direction * player.speed;
+
+            player.position.x = player.position.x + x_direction;
+            player.position.y = player.position.y + y_direction;
+        }
     }
 }
